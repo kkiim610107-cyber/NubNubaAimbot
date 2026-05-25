@@ -4,7 +4,7 @@ local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
 local Window = Library:CreateWindow({
-    Title = 'Advanced Aimbot + ESP Hub',
+    Title = '눕눕 에임핵',
     Center = true,
     AutoShow = true,
 })
