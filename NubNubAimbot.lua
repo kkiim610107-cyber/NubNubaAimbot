@@ -22,11 +22,13 @@ local ESPGroup = Tabs.Main:AddRightGroupbox('ESP Settings')
 -- ==================== SETTINGS ====================
 local AimSettings = {
     Enabled = false,
+    MissMode = false,
+    MouseDelta = false,
     TeamCheck = false,
     WallCheck = false,
     FOVEnabled = false,
     AimPart = "Head",
-    Smoothness = 0.35,
+    Smoothness = 0.15,
     FOV = 90,
     ShowFOVCircle = false,
     Triggerbot = false,
@@ -34,58 +36,56 @@ local AimSettings = {
     FOVColor = Color3.fromRGB(255, 255, 255),
 }
 
-local VisualSettings = { CameraFOV = 70 }
-
 local TrollingSettings = { TeleportBehind = false, TeamCheck = false }
 
 local ESPSettings = {
     Box = false, Name = false, HealthBar = false, Chams = false, Tracer = false,
     TeamCheck = false,
-    BoxColor = Color3.fromRGB(255, 255, 255),
+    BoxColor = Color3.fromRGB(255, 0, 0),
     NameColor = Color3.fromRGB(255, 255, 255),
-    ChamsColor = Color3.fromRGB(255, 255, 255),
-    TracerColor = Color3.fromRGB(255, 255, 255),
+    ChamsColor = Color3.fromRGB(255, 50, 50),
+    TracerColor = Color3.fromRGB(255, 0, 0),
 }
 
 -- ==================== UI ====================
-CombatGroup:AddToggle('AimbotToggle', { Text = 'Camera Aimbot', Default = false, Callback = function(v) AimSettings.Enabled = v end })
-CombatGroup:AddToggle('TeamCheckToggle', { Text = 'Aimbot Team Check', Default = false, Callback = function(v) AimSettings.TeamCheck = v end })
+CombatGroup:AddToggle('AimbotToggle', { Text = 'Aimbot', Default = false, Callback = function(v) AimSettings.Enabled = v end })
+CombatGroup:AddToggle('MissModeToggle', { Text = 'Miss Mode', Default = false, Callback = function(v) AimSettings.MissMode = v end })
+CombatGroup:AddToggle('MouseDeltaToggle', { Text = 'Mouse Delta', Default = false, Callback = function(v) AimSettings.MouseDelta = v end })
+
+CombatGroup:AddToggle('TeamCheckToggle', { Text = 'Team Check', Default = false, Callback = function(v) AimSettings.TeamCheck = v end })
 CombatGroup:AddToggle('WallCheckToggle', { Text = 'Wall Check', Default = false, Callback = function(v) AimSettings.WallCheck = v end })
+CombatGroup:AddSlider('SmoothnessSlider', { Text = 'Smoothness', Default = 0.15, Min = 0.1, Max = 1.0, Rounding = 2, Callback = function(v) AimSettings.Smoothness = v end })
 
-CombatGroup:AddSlider('SmoothnessSlider', { Text = 'Smoothness', Default = 0.35, Min = 0.1, Max = 1.0, Rounding = 2, Callback = function(v) AimSettings.Smoothness = v end })
-
-CombatGroup:AddToggle('FOVEnabledToggle', { Text = 'Aimbot FOV Enabled', Default = false, Callback = function(v) AimSettings.FOVEnabled = v end })
-CombatGroup:AddSlider('FOVSlider', { Text = 'Aimbot FOV Size', Default = 90, Min = 30, Max = 800, Rounding = 0, Callback = function(v) AimSettings.FOV = v end })
-
-CombatGroup:AddLabel('Aimbot FOV Color'):AddColorPicker('FOVColorPicker', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) AimSettings.FOVColor = v end })
+CombatGroup:AddToggle('FOVEnabledToggle', { Text = 'FOV Enabled', Default = false, Callback = function(v) AimSettings.FOVEnabled = v end })
+CombatGroup:AddSlider('FOVSlider', { Text = 'FOV Size', Default = 90, Min = 30, Max = 800, Rounding = 0, Callback = function(v) AimSettings.FOV = v end })
+CombatGroup:AddLabel('FOV Color'):AddColorPicker('FOVColorPicker', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) AimSettings.FOVColor = v end })
 CombatGroup:AddToggle('ShowFOVCircleToggle', { Text = 'Show FOV Circle', Default = false, Callback = function(v) AimSettings.ShowFOVCircle = v end })
 
 CombatGroup:AddDropdown('AimPartDropdown', { Text = 'Aim Part', Values = {'Head', 'Body', 'Legs'}, Default = 1, Callback = function(v) AimSettings.AimPart = v end })
 
-CombatGroup:AddToggle('TriggerbotToggle', { Text = 'Triggerbot (홀드)', Default = false, Callback = function(v) AimSettings.Triggerbot = v end })
-CombatGroup:AddSlider('TriggerDelaySlider', { Text = 'Trigger Delay (sec)', Default = 0.12, Min = 0.05, Max = 1.0, Rounding = 2, Callback = function(v) AimSettings.TriggerDelay = v end })
+CombatGroup:AddToggle('TriggerbotToggle', { Text = 'Triggerbot', Default = false, Callback = function(v) AimSettings.Triggerbot = v end })
+CombatGroup:AddSlider('TriggerDelaySlider', { Text = 'Trigger Delay', Default = 0.12, Min = 0.05, Max = 1.0, Rounding = 2, Callback = function(v) AimSettings.TriggerDelay = v end })
 
 VisualGroup:AddSlider('CameraFOVSlider', { Text = 'Camera FOV (Zoom)', Default = 70, Min = 70, Max = 120, Rounding = 0, Callback = function(v) workspace.CurrentCamera.FieldOfView = v end })
 
-TrollingGroup:AddToggle('TeleportBehindToggle', { Text = 'Teleport Behind Players', Default = false, Callback = function(v) TrollingSettings.TeleportBehind = v end })
-TrollingGroup:AddToggle('TrollingTeamCheckToggle', { Text = 'Trolling Team Check', Default = false, Callback = function(v) TrollingSettings.TeamCheck = v end })
+TrollingGroup:AddToggle('TeleportBehindToggle', { Text = 'Teleport Behind', Default = false, Callback = function(v) TrollingSettings.TeleportBehind = v end })
 
 ESPGroup:AddToggle('BoxToggle', { Text = 'Box ESP', Default = false, Callback = function(v) ESPSettings.Box = v end })
 ESPGroup:AddToggle('NameToggle', { Text = 'Name ESP', Default = false, Callback = function(v) ESPSettings.Name = v end })
 ESPGroup:AddToggle('HealthBarToggle', { Text = 'Health Bar', Default = false, Callback = function(v) ESPSettings.HealthBar = v end })
 ESPGroup:AddToggle('ChamsToggle', { Text = 'Chams', Default = false, Callback = function(v) ESPSettings.Chams = v end })
 ESPGroup:AddToggle('TracerToggle', { Text = 'Tracer', Default = false, Callback = function(v) ESPSettings.Tracer = v end })
-
 ESPGroup:AddToggle('ESPTeamCheckToggle', { Text = 'ESP Team Check', Default = false, Callback = function(v) ESPSettings.TeamCheck = v end })
 
-ESPGroup:AddLabel('Box Color'):AddColorPicker('BoxColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.BoxColor = v end })
+ESPGroup:AddLabel('Box Color'):AddColorPicker('BoxColor', { Default = Color3.fromRGB(255, 0, 0), Callback = function(v) ESPSettings.BoxColor = v end })
 ESPGroup:AddLabel('Name Color'):AddColorPicker('NameColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.NameColor = v end })
-ESPGroup:AddLabel('Chams Color'):AddColorPicker('ChamsColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.ChamsColor = v end })
-ESPGroup:AddLabel('Tracer Color'):AddColorPicker('TracerColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.TracerColor = v end })
+ESPGroup:AddLabel('Chams Color'):AddColorPicker('ChamsColor', { Default = Color3.fromRGB(255, 50, 50), Callback = function(v) ESPSettings.ChamsColor = v end })
+ESPGroup:AddLabel('Tracer Color'):AddColorPicker('TracerColor', { Default = Color3.fromRGB(255, 0, 0), Callback = function(v) ESPSettings.TracerColor = v end })
 
 -- ==================== Services & Variables ====================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local VirtualInputManager = game:GetService("VirtualInputManager")
@@ -98,14 +98,7 @@ FOVCircle.Transparency = 0.7
 
 local TriggerbotHolding = false
 local CurrentTarget = nil
-local TeleportedThisCycle = {}
-local LastTargetChange = 0
-local TargetChangeInterval = 1.6
-
--- 인간화 변수
-local AimDrift = Vector3.new(0,0,0)
-local DriftTime = 0
-local LastCorrection = 0
+local TargetLockTime = 0
 
 -- ==================== Functions ====================
 local function IsSameTeam(plr)
@@ -126,11 +119,11 @@ local function IsVisible(targetPart)
 end
 
 local function GetAimPart(char)
-    if AimSettings.AimPart == "Head" then return char:FindFirstChild("Head")
-    elseif AimSettings.AimPart == "Body" then return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart")
-    elseif AimSettings.AimPart == "Legs" then return char:FindFirstChild("LowerTorso") or char:FindFirstChild("LeftLeg") or char:FindFirstChild("RightLeg")
+    if AimSettings.AimPart == "Head" then 
+        return char:FindFirstChild("Head")
+    else
+        return char:FindFirstChild("UpperTorso") or char:FindFirstChild("HumanoidRootPart")
     end
-    return char:FindFirstChild("Head")
 end
 
 local function GetClosestPlayer()
@@ -167,25 +160,6 @@ local function GetClosestPlayer()
     return closest
 end
 
-local function GetRandomUnusedPlayer()
-    local candidates = {}
-    for _, plr in pairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
-            if TrollingSettings.TeamCheck and IsSameTeam(plr) then continue end
-            if not TeleportedThisCycle[plr] then
-                table.insert(candidates, plr)
-            end
-        end
-    end
-    if #candidates == 0 then
-        TeleportedThisCycle = {}
-        return GetRandomUnusedPlayer()
-    end
-    local chosen = candidates[math.random(1, #candidates)]
-    TeleportedThisCycle[chosen] = true
-    return chosen
-end
-
 local function ReleaseTriggerbot()
     if TriggerbotHolding then
         VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
@@ -193,55 +167,38 @@ local function ReleaseTriggerbot()
     end
 end
 
--- ==================== Humanized Aimbot (최종 강화) ====================
+-- ==================== Aimbot ====================
 RunService.RenderStepped:Connect(function(dt)
     if not AimSettings.Enabled then
         ReleaseTriggerbot()
+        CurrentTarget = nil
         return
     end
 
-    local closest = GetClosestPlayer()
-    if not closest or not closest.Character then
-        ReleaseTriggerbot()
-        return
+    if not CurrentTarget or not CurrentTarget.Character or CurrentTarget.Character.Humanoid.Health <= 0 or (tick() - TargetLockTime > 1.5) then
+        CurrentTarget = GetClosestPlayer()
+        if CurrentTarget then TargetLockTime = tick() end
     end
 
-    local targetPart = GetAimPart(closest.Character)
+    if not CurrentTarget or not CurrentTarget.Character then return end
+
+    local targetPart = GetAimPart(CurrentTarget.Character)
     if not targetPart then return end
 
-    -- Drift + Noise + Inertia
-    DriftTime = DriftTime + dt * (1.1 + math.random(-40,40)/100)
-    local noise = math.random(-22,22)/120
-    AimDrift = Vector3.new(
-        math.sin(DriftTime * 2.3) * 0.55 + noise,
-        math.cos(DriftTime * 1.7) * 0.38 + noise * 1.2,
-        math.sin(DriftTime * 0.95) * 0.25
-    )
+    local shake = Vector3.new(math.sin(tick() * 7.8) * 0.038, math.cos(tick() * 6.3) * 0.029, 0)
 
-    -- Overshoot & Micro Correction
-    local overshoot = Vector3.new(0,0,0)
-    if tick() - LastCorrection < 0.4 then
-        overshoot = AimDrift * 0.8
+    if AimSettings.MissMode and math.random(1,100) <= 30 then
+        shake = shake * 1.75
     end
 
-    local randomOffset = Vector3.new(
-        math.random(-35,35)/100,
-        math.random(-28,28)/100,
-        math.random(-22,22)/100
-    ) + AimDrift * 0.75 + overshoot
-
-    local targetPos = targetPart.Position + randomOffset
+    local targetPos = targetPart.Position + shake
     local targetCFrame = CFrame.new(Camera.CFrame.Position, targetPos)
-   
-    -- Dynamic Smoothing
-    local smooth = AimSettings.Smoothness + (math.random(-18,18)/100)
-    smooth = math.clamp(smooth, 0.15, 0.82)
-   
-    Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, smooth)
 
-    -- Triggerbot with natural delay
+    Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, AimSettings.Smoothness)
+
     if AimSettings.Triggerbot then
         if not TriggerbotHolding and math.random(1,100) > 35 then
+            task.wait(AimSettings.TriggerDelay)
             VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
             TriggerbotHolding = true
         end
@@ -250,28 +207,12 @@ RunService.RenderStepped:Connect(function(dt)
     end
 end)
 
--- ==================== Teleport Behind ====================
-RunService.Heartbeat:Connect(function()
-    if not TrollingSettings.TeleportBehind then
-        CurrentTarget = nil
-        return
-    end
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-
-    local currentTime = tick()
-    if not CurrentTarget or currentTime - LastTargetChange > TargetChangeInterval
-        or not CurrentTarget.Character or not CurrentTarget.Character:FindFirstChild("Humanoid")
-        or CurrentTarget.Character.Humanoid.Health <= 0 then
-        
-        CurrentTarget = GetRandomUnusedPlayer()
-        LastTargetChange = currentTime
-    end
-
-    if CurrentTarget and CurrentTarget.Character and CurrentTarget.Character:FindFirstChild("HumanoidRootPart") then
-        local root = CurrentTarget.Character.HumanoidRootPart
-        local lpRoot = LocalPlayer.Character.HumanoidRootPart
-        local behindCFrame = root.CFrame * CFrame.new(0, -2.8, 5.5)
-        lpRoot.CFrame = behindCFrame
+-- Mouse Delta
+UserInputService.InputChanged:Connect(function(input)
+    if not AimSettings.MouseDelta then return end
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Delta
+        Camera.CFrame = Camera.CFrame * CFrame.Angles(-delta.Y * 0.0038, -delta.X * 0.0038, 0)
     end
 end)
 
@@ -279,13 +220,11 @@ end)
 local function CreateESP(player)
     if player == LocalPlayer then return end
     if ESPObjects[player] then return end
-
     local Box = Drawing.new("Square"); Box.Thickness = 2; Box.Filled = false; Box.Transparency = 1
     local Name = Drawing.new("Text"); Name.Size = 14; Name.Center = true; Name.Outline = true; Name.Transparency = 1
     local Tracer = Drawing.new("Line"); Tracer.Thickness = 2; Tracer.Transparency = 1
     local HealthBG = Drawing.new("Square")
     local HealthFill = Drawing.new("Square")
-
     ESPObjects[player] = {Box = Box, Name = Name, Tracer = Tracer, HealthBG = HealthBG, HealthFill = HealthFill, Chams = nil}
 end
 
@@ -307,12 +246,12 @@ local function UpdateESP()
             local Head = char:FindFirstChild("Head")
             if Root and Head then
                 local vp, OnScreen = Camera:WorldToViewportPoint(Root.Position)
-
+                
+                -- Tracer
                 if ESPSettings.Tracer then
-                    local screenCenter = Camera.ViewportSize / 2
-                    local toPos = OnScreen and Vector2.new(vp.X, vp.Y) or (screenCenter + (Vector2.new(vp.X, vp.Y) - screenCenter).Unit * 1200)
-                    obj.Tracer.From = screenCenter
-                    obj.Tracer.To = toPos
+                    local center = Camera.ViewportSize / 2
+                    obj.Tracer.From = center
+                    obj.Tracer.To = Vector2.new(vp.X, vp.Y)
                     obj.Tracer.Color = ESPSettings.TracerColor
                     obj.Tracer.Visible = true
                 else
@@ -331,7 +270,7 @@ local function UpdateESP()
                     obj.Box.Visible = ESPSettings.Box
 
                     obj.Name.Text = player.Name
-                    obj.Name.Position = Vector2.new(Top.X, Top.Y - 20)
+                    obj.Name.Position = Vector2.new(Top.X, Top.Y - 25)
                     obj.Name.Color = ESPSettings.NameColor
                     obj.Name.Visible = ESPSettings.Name
 
@@ -372,10 +311,16 @@ local function UpdateESP()
                 end
             end
         else
-            for _, v in pairs({obj.Box, obj.Name, obj.Tracer, obj.HealthBG, obj.HealthFill}) do
-                if v then v.Visible = false end
+            -- 완전 OFF 처리
+            if obj.Box then obj.Box.Visible = false end
+            if obj.Name then obj.Name.Visible = false end
+            if obj.Tracer then obj.Tracer.Visible = false end
+            if obj.HealthBG then obj.HealthBG.Visible = false end
+            if obj.HealthFill then obj.HealthFill.Visible = false end
+            if obj.Chams then 
+                obj.Chams:Destroy() 
+                obj.Chams = nil 
             end
-            if obj.Chams then obj.Chams:Destroy(); obj.Chams = nil end
         end
     end
 end
@@ -386,11 +331,22 @@ RunService.RenderStepped:Connect(UpdateESP)
 local function OnPlayerAdded(plr)
     if plr == LocalPlayer then return end
     CreateESP(plr)
-    plr.CharacterAdded:Connect(function() task.wait(0.4) CreateESP(plr) end)
+    plr.CharacterAdded:Connect(function() task.wait(0.3) CreateESP(plr) end)
 end
 
 for _, plr in pairs(Players:GetPlayers()) do OnPlayerAdded(plr) end
 Players.PlayerAdded:Connect(OnPlayerAdded)
+
+Players.PlayerRemoving:Connect(function(plr)
+    if ESPObjects[plr] then
+        for _, v in pairs(ESPObjects[plr]) do
+            if v then
+                if v.Remove then v:Remove() else v:Destroy() end
+            end
+        end
+        ESPObjects[plr] = nil
+    end
+end)
 
 -- ==================== UI Settings ====================
 local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
@@ -403,9 +359,9 @@ ThemeManager:SetLibrary(Library)
 SaveManager:SetLibrary(Library)
 SaveManager:IgnoreThemeSettings()
 SaveManager:SetIgnoreIndexes({'MenuKeybind'})
+
 ThemeManager:SetFolder('AdvAimbotHub')
 SaveManager:SetFolder('AdvAimbotHub')
-
 SaveManager:BuildConfigSection(Tabs['UI Settings'])
 ThemeManager:ApplyToTab(Tabs['UI Settings'])
 SaveManager:LoadAutoloadConfig()
@@ -413,9 +369,14 @@ SaveManager:LoadAutoloadConfig()
 Library.Unloaded:Connect(function()
     ReleaseTriggerbot()
     Camera.FieldOfView = 70
+    if FOVCircle then FOVCircle:Remove() end
     for _, obj in pairs(ESPObjects) do
         for _, v in pairs(obj) do
-            if typeof(v) == "Instance" then v:Destroy() end
+            if v then
+                if v.Remove then v:Remove() else v:Destroy() end
+            end
         end
     end
 end)
+
+print("✅ ESP OFF 완전 수정 완료")
