@@ -19,9 +19,9 @@ local CombatGroup = Tabs.Main:AddLeftGroupbox('Aimbot Modes')
 local AdvancedGroup = Tabs.Main:AddLeftGroupbox('Aimbot Settings')
 local TriggerGroup = Tabs.Main:AddLeftGroupbox('Triggerbot Settings')
 local VisualGroup = Tabs.Main:AddRightGroupbox('Visuals')
-local TrollingGroup = Tabs.Main:AddRightGroupbox('Trolling')
 local ESPGroup = Tabs.Main:AddRightGroupbox('ESP Settings')
 
+local TeleportGroup = Tabs.Movement:AddRightGroupbox('Teleport')
 local MoveGroup = Tabs.Movement:AddLeftGroupbox('Movement Hacks')
 
 -- ==================== SETTINGS ====================
@@ -144,12 +144,12 @@ VisualGroup:AddSlider('CameraFOVSlider', {
 })
 
 -- ==================== TROLLING GROUP ====================
-TrollingGroup:AddToggle('TeleportBehindToggle', { 
+TeleportGroup:AddToggle('TeleportBehindToggle', { 
     Text = 'Teleport Behind(뒤로 텔포)', 
     Default = false, 
     Callback = function(v) TrollingSettings.TeleportBehind = v end 
 })
-TrollingGroup:AddToggle('TrollingTeamCheckToggle', { 
+TeleportGroup:AddToggle('TrollingTeamCheckToggle', { 
     Text = 'Teleport Team Check(텔포 팀체크)', 
     Default = false, 
     Callback = function(v) TrollingSettings.TeamCheck = v end 
