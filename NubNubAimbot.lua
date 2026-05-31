@@ -4,7 +4,7 @@ local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
 local Window = Library:CreateWindow({
-    Title = '눕눕 에임핵 (Hybrid Human Simulation v19)',
+    Title = '눕눕 에임핵',
     Center = true,
     AutoShow = true,
 })
@@ -60,7 +60,7 @@ local ESPSettings = {
 
 -- ==================== UI SETUP ====================
 local CameraAimToggle = CombatGroup:AddToggle('CameraAimbotToggle', { 
-    Text = 'Camera Aimbot (CFrame 수정)', 
+    Text = 'Camera Aimbot(카메라 에임봇)', 
     Default = false, 
     Callback = function(v) 
         AimSettings.CameraEnabled = v 
@@ -70,7 +70,7 @@ local CameraAimToggle = CombatGroup:AddToggle('CameraAimbotToggle', {
 CameraAimToggle:AddKeyPicker('CameraAimKeybind', { Default = 'P', SyncToggleState = true, Mode = 'Toggle', Text = '카메라 에임봇 토글' })
 
 local MouseAimToggle = CombatGroup:AddToggle('MouseAimbotToggle', {
-    Text = 'Mouse Aimbot (입력 신호 방식)',
+    Text = 'Mouse Aimbot(마우스 에임봇)',
     Default = false,
     Callback = function(v)
         AimSettings.MouseEnabled = v
@@ -79,33 +79,33 @@ local MouseAimToggle = CombatGroup:AddToggle('MouseAimbotToggle', {
 })
 MouseAimToggle:AddKeyPicker('MouseAimKeybind', { Default = 'LeftBracket', SyncToggleState = true, Mode = 'Toggle', Text = '마우스 에임봇 토글' })
 
-AdvancedGroup:AddToggle('TeamCheckToggle', { Text = 'Aimbot Team Check', Default = false, Callback = function(v) AimSettings.TeamCheck = v end })
-AdvancedGroup:AddToggle('WallCheckToggle', { Text = 'Wall Check', Default = false, Callback = function(v) AimSettings.WallCheck = v end })
-AdvancedGroup:AddSlider('SmoothnessSlider', { Text = 'Smoothness (1 = 엄청 빠름)', Default = 0.35, Min = 0.1, Max = 1.0, Rounding = 2, Callback = function(v) AimSettings.Smoothness = v end })
-AdvancedGroup:AddSlider('MouseSensitivitySlider', { Text = 'Mouse Sensitivity', Default = 1.0, Min = 0.5, Max = 2.0, Rounding = 2, Callback = function(v) AimSettings.MouseSensitivity = v end })
+AdvancedGroup:AddToggle('TeamCheckToggle', { Text = 'Aimbot Team Check(에임봇 팀체크)', Default = false, Callback = function(v) AimSettings.TeamCheck = v end })
+AdvancedGroup:AddToggle('WallCheckToggle', { Text = 'Wall Check(벽 체크)', Default = false, Callback = function(v) AimSettings.WallCheck = v end })
+AdvancedGroup:AddSlider('SmoothnessSlider', { Text = 'Smoothness (1 = ㅈㄴ빠름)', Default = 0.35, Min = 0.1, Max = 1.0, Rounding = 2, Callback = function(v) AimSettings.Smoothness = v end })
+AdvancedGroup:AddSlider('MouseSensitivitySlider', { Text = 'Mouse Sensitivity(대충 감도)', Default = 1.0, Min = 0.5, Max = 2.0, Rounding = 2, Callback = function(v) AimSettings.MouseSensitivity = v end })
 
-AdvancedGroup:AddToggle('FOVEnabledToggle', { Text = 'Aimbot FOV Enabled', Default = false, Callback = function(v) AimSettings.FOVEnabled = v end })
-AdvancedGroup:AddSlider('FOVSlider', { Text = 'Aimbot FOV Size', Default = 90, Min = 30, Max = 800, Rounding = 0, Callback = function(v) AimSettings.FOV = v end })
+AdvancedGroup:AddToggle('FOVEnabledToggle', { Text = 'Aimbot FOV(에임봇 범위)', Default = false, Callback = function(v) AimSettings.FOVEnabled = v end })
+AdvancedGroup:AddSlider('FOVSlider', { Text = 'Aimbot FOV Size(에임봇 범위 크기)', Default = 90, Min = 30, Max = 800, Rounding = 0, Callback = function(v) AimSettings.FOV = v end })
 AdvancedGroup:AddLabel('Aimbot FOV Color'):AddColorPicker('FOVColorPicker', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) AimSettings.FOVColor = v end })
-AdvancedGroup:AddToggle('ShowFOVCircleToggle', { Text = 'Show FOV Circle', Default = false, Callback = function(v) AimSettings.ShowFOVCircle = v end })
-AdvancedGroup:AddDropdown('AimPartDropdown', { Text = 'Aim Part', Values = {'Head', 'Body', 'Legs'}, Default = 1, Callback = function(v) AimSettings.AimPart = v end })
+AdvancedGroup:AddToggle('ShowFOVCircleToggle', { Text = 'Show FOV Circle(범위 표시)', Default = false, Callback = function(v) AimSettings.ShowFOVCircle = v end })
+AdvancedGroup:AddDropdown('AimPartDropdown', { Text = 'Aim Part(조준할 부분)', Values = {'Head', 'Body', 'Legs'}, Default = 1, Callback = function(v) AimSettings.AimPart = v end })
 
 -- ==================== TRIGGERBOT UI ====================
 local TriggerToggle = TriggerGroup:AddToggle('TriggerbotToggle', { 
-    Text = 'Triggerbot (순차적: 발견 → 딜레이 → 조준 → 발사)', 
+    Text = 'Triggerbot(트리거봇)', 
     Default = false, 
     Callback = function(v) TriggerSettings.Enabled = v end 
 })
 TriggerToggle:AddKeyPicker('TriggerbotKeybind', { Default = 'J', SyncToggleState = true, Mode = 'Toggle', Text = '트리거봇 토글 키' })
 
 TriggerGroup:AddToggle('RandomDelayToggle', { 
-    Text = '랜덤 딜레이 모드', 
+    Text = 'Random delay(랜덤 딜레이)', 
     Default = false, 
     Callback = function(v) TriggerSettings.RandomDelayEnabled = v end 
 })
 
 TriggerGroup:AddSlider('FixedDelaySlider', { 
-    Text = '고정 딜레이 (초)', 
+    Text = 'Triggerbot delay(트리거봇 딜레이)', 
     Default = 0.12, 
     Min = 0.05, 
     Max = 1.0, 
@@ -114,7 +114,7 @@ TriggerGroup:AddSlider('FixedDelaySlider', {
 })
 
 TriggerGroup:AddSlider('RandomDelayMinSlider', { 
-    Text = '랜덤 딜레이 최소 (초)', 
+    Text = 'Random delay Min(랜덤 딜레이 최소)', 
     Default = 0.15, 
     Min = 0.05, 
     Max = 1.0, 
@@ -123,7 +123,7 @@ TriggerGroup:AddSlider('RandomDelayMinSlider', {
 })
 
 TriggerGroup:AddSlider('RandomDelayMaxSlider', { 
-    Text = '랜덤 딜레이 최대 (초)', 
+    Text = 'Random delay Max(랜덤 딜레이 최대)', 
     Default = 0.40, 
     Min = 0.10, 
     Max = 1.5, 
@@ -133,7 +133,7 @@ TriggerGroup:AddSlider('RandomDelayMaxSlider', {
 
 -- ==================== VISUAL GROUP (카메라 FOV) ====================
 VisualGroup:AddSlider('CameraFOVSlider', { 
-    Text = 'Camera FOV (Zoom)', 
+    Text = 'Camera FOV (줌 크기)', 
     Default = 70, 
     Min = 70, 
     Max = 120, 
@@ -145,23 +145,23 @@ VisualGroup:AddSlider('CameraFOVSlider', {
 
 -- ==================== TROLLING GROUP ====================
 TrollingGroup:AddToggle('TeleportBehindToggle', { 
-    Text = 'Teleport Behind Players', 
+    Text = 'Teleport Behind(뒤로 텔포)', 
     Default = false, 
     Callback = function(v) TrollingSettings.TeleportBehind = v end 
 })
 TrollingGroup:AddToggle('TrollingTeamCheckToggle', { 
-    Text = 'Trolling Team Check', 
+    Text = 'Teleport Team Check(텔포 팀체크)', 
     Default = false, 
     Callback = function(v) TrollingSettings.TeamCheck = v end 
 })
 
 -- ==================== ESP GROUP ====================
-ESPGroup:AddToggle('BoxToggle', { Text = 'Box ESP', Default = false, Callback = function(v) ESPSettings.Box = v end })
-ESPGroup:AddToggle('NameToggle', { Text = 'Name ESP', Default = false, Callback = function(v) ESPSettings.Name = v end })
-ESPGroup:AddToggle('HealthBarToggle', { Text = 'Health Bar', Default = false, Callback = function(v) ESPSettings.HealthBar = v end })
-ESPGroup:AddToggle('ChamsToggle', { Text = 'Chams', Default = false, Callback = function(v) ESPSettings.Chams = v end })
-ESPGroup:AddToggle('TracerToggle', { Text = 'Tracer', Default = false, Callback = function(v) ESPSettings.Tracer = v end })
-ESPGroup:AddToggle('ESPTeamCheckToggle', { Text = 'ESP Team Check', Default = false, Callback = function(v) ESPSettings.TeamCheck = v end })
+ESPGroup:AddToggle('BoxToggle', { Text = 'Box ESP (박스 esp)', Default = false, Callback = function(v) ESPSettings.Box = v end })
+ESPGroup:AddToggle('NameToggle', { Text = 'Name ESP (닉넴 esp)', Default = false, Callback = function(v) ESPSettings.Name = v end })
+ESPGroup:AddToggle('HealthBarToggle', { Text = 'Health Bar (체력바)', Default = false, Callback = function(v) ESPSettings.HealthBar = v end })
+ESPGroup:AddToggle('ChamsToggle', { Text = 'Chams (윤곽선)', Default = false, Callback = function(v) ESPSettings.Chams = v end })
+ESPGroup:AddToggle('TracerToggle', { Text = 'Tracer (트레이서)', Default = false, Callback = function(v) ESPSettings.Tracer = v end })
+ESPGroup:AddToggle('ESPTeamCheckToggle', { Text = 'ESP Team Check (ESP 팀체크)', Default = false, Callback = function(v) ESPSettings.TeamCheck = v end })
 
 ESPGroup:AddLabel('Box Color'):AddColorPicker('BoxColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.BoxColor = v end })
 ESPGroup:AddLabel('Name Color'):AddColorPicker('NameColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.NameColor = v end })
@@ -185,20 +185,20 @@ MoveGroup:AddToggle('NoclipToggle', {
 })
 
 MoveGroup:AddToggle('FlyToggle', { 
-    Text = 'Fly (공중 비행)', 
+    Text = 'Fly (플라이)', 
     Default = false, 
     Callback = function(v) MoveSettings.Fly = v end 
 })
 
 MoveGroup:AddDropdown('FlyModeDropdown', { 
-    Text = 'Fly Mode', 
+    Text = 'Fly Mode (플라이 모드)', 
     Values = {'BodyVelocity', 'CFrame'}, 
     Default = 1, 
     Callback = function(v) MoveSettings.FlyMode = v end 
 })
 
 MoveGroup:AddSlider('FlySpeedSlider', { 
-    Text = 'Fly Speed', 
+    Text = 'Fly Speed (플라이 속도)', 
     Default = 50, 
     Min = 10, 
     Max = 200, 
