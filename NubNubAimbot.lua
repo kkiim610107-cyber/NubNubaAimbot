@@ -283,26 +283,48 @@ local function GetClosestPlayer()
     local useDistanceOnly = not AimSettings.FOVEnabled
 
     for _, plr in pairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
-            if AimSettings.TeamCheck and IsSameTeam(plr) then continue end
-            local part = GetAimPart(plr.Character)
-            if part then
-                if useDistanceOnly then
-                    local distance = (part.Position - Camera.CFrame.Position).Magnitude
-                    if distance < dist and IsVisible(part) then 
+        if plr == LocalPlayer then continue end
+        
+        -- 1. 캐릭터 존재 확인
+        local char = plr.Character
+        if not char then continue end
+        
+        -- 2. Humanoid 확인
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if not humanoid then continue end
+        
+        -- 3. ★ 중요: 죽은 플레이어 완전히 제외
+        if humanoid.Health <= 0 then continue end
+        if humanoid:GetState() == Enum.HumanoidStateType.Dead then continue end
+        
+        -- 4. 캐릭터가 workspace에 있는지 확인 (파괴된 캐릭터 제외)
+        if char.Parent ~= workspace then continue end
+        
+        if AimSettings.TeamCheck and IsSameTeam(plr) then continue end
+        
+        local part = GetAimPart(char)
+        if not part then continue end
+        
+        -- 5. ★ 안전하게 Position 가져오기 (파괴된 파트 방지)
+        local success, position = pcall(function()
+            return part.Position
+        end)
+        if not success then continue end
+        
+        if useDistanceOnly then
+            local distance = (position - Camera.CFrame.Position).Magnitude
+            if distance < dist and IsVisible(part) then 
+                dist = distance
+                closest = plr 
+            end
+        else
+            local vp, onScreen = Camera:WorldToViewportPoint(position)
+            if onScreen then
+                local distance = (Vector2.new(vp.X, vp.Y) - centerPoint).Magnitude
+                if distance <= AimSettings.FOV and IsVisible(part) then
+                    if distance < dist then 
                         dist = distance
                         closest = plr 
-                    end
-                else
-                    local vp, onScreen = Camera:WorldToViewportPoint(part.Position)
-                    if onScreen then
-                        local distance = (Vector2.new(vp.X, vp.Y) - centerPoint).Magnitude
-                        if distance <= AimSettings.FOV and IsVisible(part) then
-                            if distance < dist then 
-                                dist = distance
-                                closest = plr 
-                            end
-                        end
                     end
                 end
             end
