@@ -285,19 +285,19 @@ local function GetClosestPlayer()
     for _, plr in pairs(Players:GetPlayers()) do
         if plr == LocalPlayer then continue end
         
-        -- 1. 캐릭터 존재 확인
+     
         local char = plr.Character
         if not char then continue end
         
-        -- 2. Humanoid 확인
+     
         local humanoid = char:FindFirstChildOfClass("Humanoid")
         if not humanoid then continue end
         
-        -- 3. ★ 중요: 죽은 플레이어 완전히 제외
+      
         if humanoid.Health <= 0 then continue end
         if humanoid:GetState() == Enum.HumanoidStateType.Dead then continue end
         
-        -- 4. 캐릭터가 workspace에 있는지 확인 (파괴된 캐릭터 제외)
+       
         if char.Parent ~= workspace then continue end
         
         if AimSettings.TeamCheck and IsSameTeam(plr) then continue end
@@ -305,7 +305,7 @@ local function GetClosestPlayer()
         local part = GetAimPart(char)
         if not part then continue end
         
-        -- 5. ★ 안전하게 Position 가져오기 (파괴된 파트 방지)
+       
         local success, position = pcall(function()
             return part.Position
         end)
@@ -381,8 +381,11 @@ local function ExecuteTriggerbot(targetPlayer, targetPart)
     if not humanoid or humanoid.Health <= 0 then return end
     
     IsTriggerbotActive = true
+    
+    
     local delayTime = GetCurrentDelay()
     task.wait(delayTime)
+    
     
     if not TriggerSettings.Enabled then 
         IsTriggerbotActive = false
@@ -397,40 +400,44 @@ local function ExecuteTriggerbot(targetPlayer, targetPart)
         return
     end
     
-    local freshTargetPart = GetAimPart(targetPlayer.Character)
-    if not freshTargetPart then
-        IsTriggerbotActive = false
-        return
-    end
     
-    local startTime = tick()
+    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
     
-    while tick() - startTime < 0.05 and TriggerSettings.Enabled do
-        if not targetPlayer.Character or not targetPlayer.Character:FindFirstChildOfClass("Humanoid") then break end
-        if targetPlayer.Character.Humanoid.Health <= 0 then break end
+  
+    while TriggerSettings.Enabled do
+        task.wait(0.03)  
         
-        local currentTargetPos = GetAimPart(targetPlayer.Character)
-        if currentTargetPos then
-            if AimSettings.CameraEnabled then
-                local targetCFrame = CFrame.new(Camera.CFrame.Position, currentTargetPos.Position)
-                Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, 0.55)
-            elseif AimSettings.MouseEnabled then
-                local centerPoint = Camera.ViewportSize / 2
-                local screenPos, onScreen = Camera:WorldToViewportPoint(currentTargetPos.Position)
-                if onScreen then
-                    local rawDelta = (Vector2.new(screenPos.X, screenPos.Y) - centerPoint) * AimSettings.MouseSensitivity * 0.55
-                    mousemoverel(rawDelta.X, rawDelta.Y)
-                end
-            end
+       
+        if not targetPlayer.Character then
+            break
         end
-        task.wait()
+        
+        local currentHumanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if not currentHumanoid or currentHumanoid.Health <= 0 then
+            break
+        end
+        
+       
+        local targetPartPos = GetAimPart(targetPlayer.Character)
+        if not targetPartPos then
+            break
+        end
+        
+        local screenPos, onScreen = Camera:WorldToViewportPoint(targetPartPos.Position)
+        if not onScreen then
+            break
+        end
+        
+        local mousePos = UserInputService:GetMouseLocation()
+        local targetScreenPos = Vector2.new(screenPos.X, screenPos.Y)
+        local distance = (mousePos - targetScreenPos).Magnitude
+        
+        if distance > 50 then
+            break
+        end
     end
     
-    if TriggerSettings.Enabled and targetPlayer.Character and targetPlayer.Character:FindFirstChildOfClass("Humanoid") and targetPlayer.Character.Humanoid.Health > 0 then
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-        task.wait(0.03)
-        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-    end
+    VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
     
     IsTriggerbotActive = false
 end
