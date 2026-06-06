@@ -132,6 +132,14 @@ TriggerGroup:AddSlider('RandomDelayMaxSlider', {
 })
 
 -- ==================== VISUAL GROUP (카메라 FOV) ====================
+local Lighting = game:GetService("Lighting")
+
+local OldBrightness = Lighting.Brightness
+local OldClockTime = Lighting.ClockTime
+local OldFogEnd = Lighting.FogEnd
+local OldGlobalShadows = Lighting.GlobalShadows
+local OldOutdoorAmbient = Lighting.OutdoorAmbient
+
 VisualGroup:AddSlider('CameraFOVSlider', { 
     Text = 'Camera FOV (줌 크기)', 
     Default = 70, 
@@ -141,6 +149,26 @@ VisualGroup:AddSlider('CameraFOVSlider', {
     Callback = function(v) 
         workspace.CurrentCamera.FieldOfView = v 
     end 
+})
+
+VisualGroup:AddToggle('FullbrightToggle', {
+    Text = 'FullBright (밝은 화면)',
+    Default = false,
+    Callback = function(v)
+        if v then
+            Lighting.Brightness = 2
+            Lighting.ClockTime = 14
+            Lighting.FogEnd = 100000
+            Lighting.GlobalShadows = false
+            Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+        else
+            Lighting.Brightness = OldBrightness
+            Lighting.ClockTime = OldClockTime
+            Lighting.FogEnd = OldFogEnd
+            Lighting.GlobalShadows = OldGlobalShadows
+            Lighting.OutdoorAmbient = OldOutdoorAmbient
+        end
+    end
 })
 
 -- ==================== TROLLING GROUP ====================
