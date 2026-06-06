@@ -67,7 +67,7 @@ local CameraAimToggle = CombatGroup:AddToggle('CameraAimbotToggle', {
         if v and MouseAimToggle then MouseAimToggle:SetValue(false) end
     end 
 })
-CameraAimToggle:AddKeyPicker('CameraAimKeybind', { Default = 'P', SyncToggleState = true, Mode = 'Toggle', Text = '카메라 에임봇 토글' })
+CameraAimToggle:AddKeyPicker('CameraAimKeybind', { Default = 'Insert', SyncToggleState = true, Mode = 'Toggle', Text = '카메라 에임봇 토글' })
 
 local MouseAimToggle = CombatGroup:AddToggle('MouseAimbotToggle', {
     Text = 'Mouse Aimbot(마우스 에임봇)',
@@ -77,7 +77,7 @@ local MouseAimToggle = CombatGroup:AddToggle('MouseAimbotToggle', {
         if v and CameraAimToggle then CameraAimToggle:SetValue(false) end
     end
 })
-MouseAimToggle:AddKeyPicker('MouseAimKeybind', { Default = 'LeftBracket', SyncToggleState = true, Mode = 'Toggle', Text = '마우스 에임봇 토글' })
+MouseAimToggle:AddKeyPicker('MouseAimKeybind', { Default = 'Delete', SyncToggleState = true, Mode = 'Toggle', Text = '마우스 에임봇 토글' })
 
 AdvancedGroup:AddToggle('TeamCheckToggle', { Text = 'Aimbot Team Check(에임봇 팀체크)', Default = false, Callback = function(v) AimSettings.TeamCheck = v end })
 AdvancedGroup:AddToggle('WallCheckToggle', { Text = 'Wall Check(벽 체크)', Default = false, Callback = function(v) AimSettings.WallCheck = v end })
@@ -96,7 +96,7 @@ local TriggerToggle = TriggerGroup:AddToggle('TriggerbotToggle', {
     Default = false, 
     Callback = function(v) TriggerSettings.Enabled = v end 
 })
-TriggerToggle:AddKeyPicker('TriggerbotKeybind', { Default = 'J', SyncToggleState = true, Mode = 'Toggle', Text = '트리거봇 토글 키' })
+TriggerToggle:AddKeyPicker('TriggerbotKeybind', { Default = 'PageUp', SyncToggleState = true, Mode = 'Toggle', Text = '트리거봇 토글 키' })
 
 TriggerGroup:AddToggle('RandomDelayToggle', { 
     Text = 'Random delay(랜덤 딜레이)', 
