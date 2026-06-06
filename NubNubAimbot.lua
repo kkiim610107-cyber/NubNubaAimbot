@@ -885,7 +885,7 @@ Players.PlayerAdded:Connect(OnPlayerAdded)
 -- ==================== UI MANAGEMENT ====================
 local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
 MenuGroup:AddButton('Unload', function() Library:Unload() end)
-MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true })
+MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'Equals', NoUI = true })
 
 Library.ToggleKeybind = Options.MenuKeybind
 ThemeManager:SetLibrary(Library)
