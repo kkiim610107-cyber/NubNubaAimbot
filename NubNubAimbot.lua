@@ -21,7 +21,7 @@ local TriggerGroup = Tabs.Main:AddLeftGroupbox('Triggerbot Settings')
 local VisualGroup = Tabs.Main:AddRightGroupbox('Visuals')
 local ESPGroup = Tabs.Main:AddRightGroupbox('ESP Settings')
 
-local TeleportGroup = Tabs.Movement:AddRightGroupbox('Teleport')
+local TeleportGroup = Tabs.Movement:AddRightGroupbox('Teleport Behind')
 local MoveGroup = Tabs.Movement:AddLeftGroupbox('Movement Hacks')
 
 -- ==================== SETTINGS ====================
@@ -47,8 +47,23 @@ local TriggerSettings = {
     RandomDelayMax = 0.40,
 }
 
-local MoveSettings = { Noclip = false, Fly = false, FlyMode = "BodyVelocity", FlySpeed = 50 }
-local TrollingSettings = { TeleportBehind = false, TeamCheck = false }
+local MoveSettings = { 
+    Noclip = false, 
+    Fly = false, 
+    FlyMode = "BodyVelocity", 
+    FlySpeed = 50,
+    WalkSpeed = 16,
+    JumpPower = 50,
+}
+
+local TeleportSettings = {
+    Enabled = false,
+    TeamCheck = false,
+    Distance = 5.5,
+    Height = -2.8,
+    UpdateInterval = 0.1,
+}
+
 local ESPSettings = { 
     Box = false, Name = false, HealthBar = false, Chams = false, Tracer = false, 
     TeamCheck = false, 
@@ -131,7 +146,7 @@ TriggerGroup:AddSlider('RandomDelayMaxSlider', {
     Callback = function(v) TriggerSettings.RandomDelayMax = v end 
 })
 
--- ==================== VISUAL GROUP (카메라 FOV) ====================
+-- ==================== VISUAL GROUP ====================
 local Lighting = game:GetService("Lighting")
 
 local OldBrightness = Lighting.Brightness
@@ -171,32 +186,53 @@ VisualGroup:AddToggle('FullbrightToggle', {
     end
 })
 
--- ==================== TROLLING GROUP ====================
-TeleportGroup:AddToggle('TeleportBehindToggle', { 
-    Text = 'Teleport Behind(뒤로 텔포)', 
+-- ==================== TELEPORT BEHIND UI ====================
+local TeleportToggle = TeleportGroup:AddToggle('TeleportBehindToggle', { 
+    Text = 'Teleport Behind (뒤로 텔레포트)', 
     Default = false, 
-    Callback = function(v) TrollingSettings.TeleportBehind = v end 
+    Callback = function(v) 
+        TeleportSettings.Enabled = v 
+        if not v then
+            TeleportTarget = nil
+        end
+    end 
 })
-TeleportGroup:AddToggle('TrollingTeamCheckToggle', { 
-    Text = 'Teleport Team Check(텔포 팀체크)', 
+TeleportToggle:AddKeyPicker('TeleportKeybind', { Default = 'X', SyncToggleState = true, Mode = 'Toggle', Text = '텔레포트 토글 키' })
+
+TeleportGroup:AddToggle('TeleportTeamCheckToggle', { 
+    Text = 'Team Check (팀체크)', 
     Default = false, 
-    Callback = function(v) TrollingSettings.TeamCheck = v end 
+    Callback = function(v) TeleportSettings.TeamCheck = v end 
 })
 
--- ==================== ESP GROUP ====================
-ESPGroup:AddToggle('BoxToggle', { Text = 'Box ESP (박스 esp)', Default = false, Callback = function(v) ESPSettings.Box = v end })
-ESPGroup:AddToggle('NameToggle', { Text = 'Name ESP (닉넴 esp)', Default = false, Callback = function(v) ESPSettings.Name = v end })
-ESPGroup:AddToggle('HealthBarToggle', { Text = 'Health Bar (체력바)', Default = false, Callback = function(v) ESPSettings.HealthBar = v end })
-ESPGroup:AddToggle('ChamsToggle', { Text = 'Chams (윤곽선)', Default = false, Callback = function(v) ESPSettings.Chams = v end })
-ESPGroup:AddToggle('TracerToggle', { Text = 'Tracer (트레이서)', Default = false, Callback = function(v) ESPSettings.Tracer = v end })
-ESPGroup:AddToggle('ESPTeamCheckToggle', { Text = 'ESP Team Check (ESP 팀체크)', Default = false, Callback = function(v) ESPSettings.TeamCheck = v end })
+TeleportGroup:AddSlider('TeleportDistanceSlider', { 
+    Text = 'Teleport Distance (거리)', 
+    Default = 55, 
+    Min = 20, 
+    Max = 150, 
+    Rounding = 0, 
+    Callback = function(v) TeleportSettings.Distance = v / 10 end 
+})
 
-ESPGroup:AddLabel('Box Color'):AddColorPicker('BoxColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.BoxColor = v end })
-ESPGroup:AddLabel('Name Color'):AddColorPicker('NameColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.NameColor = v end })
-ESPGroup:AddLabel('Chams Color'):AddColorPicker('ChamsColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.ChamsColor = v end })
-ESPGroup:AddLabel('Tracer Color'):AddColorPicker('TracerColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.TracerColor = v end })
+TeleportGroup:AddSlider('TeleportHeightSlider', { 
+    Text = 'Teleport Height (높이)', 
+    Default = -28, 
+    Min = -50, 
+    Max = 0, 
+    Rounding = 0, 
+    Callback = function(v) TeleportSettings.Height = v / 10 end 
+})
 
--- ==================== MOVEMENT GROUP ====================
+TeleportGroup:AddSlider('TeleportUpdateInterval', { 
+    Text = 'Update Interval (초)', 
+    Default = 1, 
+    Min = 1, 
+    Max = 10, 
+    Rounding = 1, 
+    Callback = function(v) TeleportSettings.UpdateInterval = v end 
+})
+
+-- ==================== MOVEMENT UI ====================
 MoveGroup:AddToggle('NoclipToggle', { 
     Text = 'Noclip (벽 통과)', 
     Default = false, 
@@ -234,6 +270,49 @@ MoveGroup:AddSlider('FlySpeedSlider', {
     Callback = function(v) MoveSettings.FlySpeed = v end 
 })
 
+-- Walk Speed Slider
+MoveGroup:AddSlider('WalkSpeedSlider', { 
+    Text = 'Walk Speed (걷기 속도)', 
+    Default = 16, 
+    Min = 16, 
+    Max = 200, 
+    Rounding = 0, 
+    Callback = function(v) 
+        MoveSettings.WalkSpeed = v
+        if LocalPlayer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = v
+        end
+    end 
+})
+
+-- Jump Power Slider
+MoveGroup:AddSlider('JumpPowerSlider', { 
+    Text = 'Jump Power (점프력)', 
+    Default = 50, 
+    Min = 50, 
+    Max = 200, 
+    Rounding = 0, 
+    Callback = function(v) 
+        MoveSettings.JumpPower = v
+        if LocalPlayer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            LocalPlayer.Character.Humanoid.JumpPower = v
+        end
+    end 
+})
+
+-- ==================== ESP GROUP ====================
+ESPGroup:AddToggle('BoxToggle', { Text = 'Box ESP (박스 esp)', Default = false, Callback = function(v) ESPSettings.Box = v end })
+ESPGroup:AddToggle('NameToggle', { Text = 'Name ESP (닉넴 esp)', Default = false, Callback = function(v) ESPSettings.Name = v end })
+ESPGroup:AddToggle('HealthBarToggle', { Text = 'Health Bar (체력바)', Default = false, Callback = function(v) ESPSettings.HealthBar = v end })
+ESPGroup:AddToggle('ChamsToggle', { Text = 'Chams (윤곽선)', Default = false, Callback = function(v) ESPSettings.Chams = v end })
+ESPGroup:AddToggle('TracerToggle', { Text = 'Tracer (트레이서)', Default = false, Callback = function(v) ESPSettings.Tracer = v end })
+ESPGroup:AddToggle('ESPTeamCheckToggle', { Text = 'ESP Team Check (ESP 팀체크)', Default = false, Callback = function(v) ESPSettings.TeamCheck = v end })
+
+ESPGroup:AddLabel('Box Color'):AddColorPicker('BoxColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.BoxColor = v end })
+ESPGroup:AddLabel('Name Color'):AddColorPicker('NameColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.NameColor = v end })
+ESPGroup:AddLabel('Chams Color'):AddColorPicker('ChamsColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.ChamsColor = v end })
+ESPGroup:AddLabel('Tracer Color'):AddColorPicker('TracerColor', { Default = Color3.fromRGB(255, 255, 255), Callback = function(v) ESPSettings.TracerColor = v end })
+
 -- ==================== SERVICES & VARIABLES ====================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -251,11 +330,6 @@ FOVCircle.Transparency = 0.8
 local IsTriggerbotActive = false
 local LastTriggerCheck = 0
 local TRIGGER_CHECK_INTERVAL = 0.04
-local CurrentTarget = nil
-local TeleportedThisCycle = {}
-local LastTargetChange = 0
-local TargetChangeInterval = 1.6
-
 local lastDelta = Vector2.new(0, 0)
 local ShakeTime = 0
 local SmoothShakeOffset = Vector3.new(0,0,0)
@@ -275,6 +349,10 @@ local IsTrackingFailing = false
 local FlyBV = nil
 local FlyBG = nil
 local KeysDown = {W = false, A = false, S = false, D = false, Space = false, LeftControl = false}
+
+-- ==================== TELEPORT BEHIND VARIABLES ====================
+local TeleportTarget = nil
+local LastTeleportTime = 0
 
 -- ==================== FUNCTIONS ====================
 local function IsSameTeam(plr)
@@ -313,19 +391,15 @@ local function GetClosestPlayer()
     for _, plr in pairs(Players:GetPlayers()) do
         if plr == LocalPlayer then continue end
         
-     
         local char = plr.Character
         if not char then continue end
         
-     
         local humanoid = char:FindFirstChildOfClass("Humanoid")
         if not humanoid then continue end
         
-      
         if humanoid.Health <= 0 then continue end
         if humanoid:GetState() == Enum.HumanoidStateType.Dead then continue end
         
-       
         if char.Parent ~= workspace then continue end
         
         if AimSettings.TeamCheck and IsSameTeam(plr) then continue end
@@ -333,7 +407,6 @@ local function GetClosestPlayer()
         local part = GetAimPart(char)
         if not part then continue end
         
-       
         local success, position = pcall(function()
             return part.Position
         end)
@@ -398,6 +471,55 @@ local function IsEnemyAtCenter()
     return false
 end
 
+-- ==================== TELEPORT BEHIND FUNCTION ====================
+local function GetBestTeleportTarget()
+    local closest = nil
+    local closestDist = math.huge
+    
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr == LocalPlayer then continue end
+        
+        if TeleportSettings.TeamCheck and IsSameTeam(plr) then continue end
+        
+        local char = plr.Character
+        if not char then continue end
+        
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if not humanoid or humanoid.Health <= 0 then continue end
+        
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then continue end
+        
+        local dist = (root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+        if dist < closestDist then
+            closestDist = dist
+            closest = plr
+        end
+    end
+    
+    return closest
+end
+
+local function TeleportBehind(target)
+    if not target then return false end
+    if not target.Character then return false end
+    
+    local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+    if not targetRoot then return false end
+    
+    local lpRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not lpRoot then return false end
+    
+    -- 텔레포트 위치 계산 (상대방 뒤로)
+    local teleportPos = targetRoot.CFrame * CFrame.new(0, TeleportSettings.Height, TeleportSettings.Distance)
+    
+    -- 위치로 텔레포트
+    lpRoot.CFrame = teleportPos
+    lpRoot.Velocity = Vector3.zero
+    
+    return true
+end
+
 -- ==================== TRIGGERBOT 실행 함수 ====================
 local function ExecuteTriggerbot(targetPlayer, targetPart)
     if not TriggerSettings.Enabled then return end
@@ -410,10 +532,8 @@ local function ExecuteTriggerbot(targetPlayer, targetPart)
     
     IsTriggerbotActive = true
     
-    
     local delayTime = GetCurrentDelay()
     task.wait(delayTime)
-    
     
     if not TriggerSettings.Enabled then 
         IsTriggerbotActive = false
@@ -428,41 +548,27 @@ local function ExecuteTriggerbot(targetPlayer, targetPart)
         return
     end
     
-    
     VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
     
-  
     while TriggerSettings.Enabled do
         task.wait(0.03)  
         
-       
-        if not targetPlayer.Character then
-            break
-        end
+        if not targetPlayer.Character then break end
         
         local currentHumanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if not currentHumanoid or currentHumanoid.Health <= 0 then
-            break
-        end
+        if not currentHumanoid or currentHumanoid.Health <= 0 then break end
         
-       
         local targetPartPos = GetAimPart(targetPlayer.Character)
-        if not targetPartPos then
-            break
-        end
+        if not targetPartPos then break end
         
         local screenPos, onScreen = Camera:WorldToViewportPoint(targetPartPos.Position)
-        if not onScreen then
-            break
-        end
+        if not onScreen then break end
         
         local mousePos = UserInputService:GetMouseLocation()
         local targetScreenPos = Vector2.new(screenPos.X, screenPos.Y)
         local distance = (mousePos - targetScreenPos).Magnitude
         
-        if distance > 50 then
-            break
-        end
+        if distance > 50 then break end
     end
     
     VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
@@ -484,151 +590,192 @@ RunService.RenderStepped:Connect(function(dt)
         LastActiveTarget = nil
         IsMissingState = false
         IsTrackingFailing = false
-        return
-    end
-
-    local closest = GetClosestPlayer()
-    
-    -- Triggerbot 감지 (40ms 간격)
-    if TriggerSettings.Enabled and not IsTriggerbotActive then
-        local now = tick()
-        if now - LastTriggerCheck >= TRIGGER_CHECK_INTERVAL then
-            LastTriggerCheck = now
-            if IsEnemyAtCenter() then
-                local centerTarget = GetClosestPlayer()
-                if centerTarget and centerTarget.Character then
-                    local targetPart = GetAimPart(centerTarget.Character)
-                    if targetPart then
-                        task.spawn(function()
-                            ExecuteTriggerbot(centerTarget, targetPart)
-                        end)
+    else
+        local closest = GetClosestPlayer()
+        
+        -- Triggerbot 감지
+        if TriggerSettings.Enabled and not IsTriggerbotActive then
+            local now = tick()
+            if now - LastTriggerCheck >= TRIGGER_CHECK_INTERVAL then
+                LastTriggerCheck = now
+                if IsEnemyAtCenter() then
+                    local centerTarget = GetClosestPlayer()
+                    if centerTarget and centerTarget.Character then
+                        local targetPart = GetAimPart(centerTarget.Character)
+                        if targetPart then
+                            task.spawn(function()
+                                ExecuteTriggerbot(centerTarget, targetPart)
+                            end)
+                        end
                     end
                 end
             end
         end
+        
+        -- Aimbot 조준 로직
+        if closest and closest.Character then
+            local targetPart = GetAimPart(closest.Character)
+            if targetPart then
+                
+                if LastActiveTarget ~= closest then
+                    LastActiveTarget = closest
+                    CurrentCurveProgress = 0
+                    TargetRecovered = false
+                    IsTrackingFailing = false
+                    TrackingFailTimer = 0
+                    
+                    if math.random(1, 100) <= 30 then
+                        IsMissingState = true
+                        MissTimer = 0
+                        ReturnTimer = 0
+                        local types = {"Behind", "Above", "Front", "Below"}
+                        MissType = types[math.random(1, #types)]
+                    else
+                        IsMissingState = false
+                        MissType = "None"
+                    end
+                end
+
+                local basePosition = targetPart.Position
+                local distance = (basePosition - Camera.CFrame.Position).Magnitude
+
+                if distance > 40 then
+                    local distanceFactor = math.clamp((distance - 40) / 120, 0, 4.5)
+                    local distanceSpread = Vector3.new(
+                        math.sin(tick() * 2) * distanceFactor * 0.7,
+                        math.cos(tick() * 3) * distanceFactor * 0.6,
+                        math.sin(tick() * 1.5) * distanceFactor * 0.5
+                    )
+                    basePosition = basePosition + distanceSpread
+                end
+
+                TrackingFailTimer = TrackingFailTimer + dt
+                if TrackingFailTimer > 1.2 then
+                    TrackingFailTimer = 0
+                    if math.random(1, 100) <= 15 then
+                        IsTrackingFailing = true
+                        local velocityOffset = closest.Character:FindFirstChild("HumanoidRootPart") and closest.Character.HumanoidRootPart.Velocity * 0.15 or Vector3.new(0,0,0)
+                        TrackingFailOffset = velocityOffset + Vector3.new(math.random(-4, 4), math.random(-3, 3), math.random(-4, 4))
+                    else
+                        IsTrackingFailing = false
+                    end
+                end
+
+                if IsTrackingFailing then
+                    basePosition = basePosition:Lerp(basePosition + TrackingFailOffset, 0.6)
+                end
+
+                if IsMissingState and not TargetRecovered then
+                    MissTimer = MissTimer + dt
+                    if MissTimer < 0.20 then
+                        local progress = math.sin((MissTimer / 0.20) * (math.pi / 2))
+                        local offset = Vector3.new(0, 0, 0)
+                        
+                        if MissType == "Behind" then offset = Camera.CFrame.RightVector * 2.5
+                        elseif MissType == "Front" then offset = -Camera.CFrame.RightVector * 2.5
+                        elseif MissType == "Above" then offset = Camera.CFrame.UpVector * 2.2
+                        elseif MissType == "Below" then offset = -Camera.CFrame.UpVector * 1.1 end
+                        basePosition = basePosition + (offset * progress)
+                    else
+                        ReturnTimer = math.clamp(ReturnTimer + dt * (1.5 + AimSettings.Smoothness * 6), 0, 1)
+                        local ease = 0.5 - math.cos(ReturnTimer * math.pi) / 2
+                        
+                        local offset = Vector3.new(0, 0, 0)
+                        if MissType == "Behind" then offset = Camera.CFrame.RightVector * 2.5
+                        elseif MissType == "Front" then offset = -Camera.CFrame.RightVector * 2.5
+                        elseif MissType == "Above" then offset = Camera.CFrame.UpVector * 2.2
+                        elseif MissType == "Below" then offset = -Camera.CFrame.UpVector * 1.1 end
+                        
+                        basePosition = (basePosition + offset):Lerp(targetPart.Position, ease)
+                        if ReturnTimer >= 1 then TargetRecovered = true end
+                    end
+                end
+
+                ShakeTime = ShakeTime + dt * 35.0
+                local rawShake = Vector3.new(
+                    math.sin(ShakeTime * 1.3) * 0.42 + (math.random(-30, 30) / 75),
+                    math.cos(ShakeTime * 1.6) * 0.35 + (math.random(-30, 30) / 75),
+                    0
+                )
+                SmoothShakeOffset = SmoothShakeOffset:Lerp(rawShake, dt * 15.0)
+                local finalTargetPos = basePosition + SmoothShakeOffset
+
+                local screenPos, onScreen = Camera:WorldToViewportPoint(finalTargetPos)
+                if onScreen then
+                    local finalScreenPos = Vector2.new(screenPos.X, screenPos.Y)
+                    
+                    CurrentCurveProgress = math.clamp(CurrentCurveProgress + (dt * (1.5 + AimSettings.Smoothness * 6)), 0, 1)
+                    if CurrentCurveProgress < 1 then
+                        local p0 = centerPoint
+                        local p2 = finalScreenPos
+                        local midPoint = p0:Lerp(p2, 0.5)
+                        local p1 = Vector2.new(midPoint.X, math.min(p0.Y, p2.Y) - math.abs(p0.X - p2.X) * 0.3)
+                        finalScreenPos = GetBezierPoint(p0, p1, p2, CurrentCurveProgress)
+                    end
+
+                    local dynamicLerpFactor = math.clamp(AimSettings.Smoothness, 0.05, 1.0)
+                    if dynamicLerpFactor < 1.0 then
+                        local antiCheatJitter = (math.random(-4, 4) / 180)
+                        dynamicLerpFactor = math.clamp(dynamicLerpFactor + antiCheatJitter, 0.05, 0.98)
+                    end
+
+                    if AimSettings.CameraEnabled then
+                        local targetCFrame = CFrame.new(Camera.CFrame.Position, Camera:ViewportPointToRay(finalScreenPos.X, finalScreenPos.Y).Direction + Camera.CFrame.Position)
+                        Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, dynamicLerpFactor)
+                    elseif AimSettings.MouseEnabled then
+                        local rawDelta = (finalScreenPos - centerPoint) * AimSettings.MouseSensitivity * 0.42
+                        lastDelta = lastDelta:Lerp(rawDelta, dynamicLerpFactor)
+                        mousemoverel(lastDelta.X, lastDelta.Y)
+                    end
+                end
+            end
+        else
+            LastActiveTarget = nil
+            IsMissingState = false
+            IsTrackingFailing = false
+        end
+    end
+end)
+
+-- ==================== TELEPORT BEHIND LOOP (지속적인 텔레포트) ====================
+RunService.Heartbeat:Connect(function()
+    if not TeleportSettings.Enabled then 
+        TeleportTarget = nil
+        return 
     end
     
-    -- Aimbot 조준 로직
-    if closest and closest.Character then
-        local targetPart = GetAimPart(closest.Character)
-        if targetPart then
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then 
+        return 
+    end
+    
+    local currentTime = tick()
+    
+    -- 업데이트 간격마다 타겟 갱신 및 텔레포트
+    if currentTime - LastTeleportTime >= TeleportSettings.UpdateInterval then
+        -- 새로운 타겟 찾기
+        local newTarget = GetBestTeleportTarget()
+        if newTarget then
+            TeleportTarget = newTarget
+        end
+        
+        -- 타겟이 있으면 텔레포트
+        if TeleportTarget then
+            -- 타겟이 아직 살아있는지 확인
+            local targetChar = TeleportTarget.Character
+            local targetHumanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
             
-            if LastActiveTarget ~= closest then
-                LastActiveTarget = closest
-                CurrentCurveProgress = 0
-                TargetRecovered = false
-                IsTrackingFailing = false
-                TrackingFailTimer = 0
-                
-                if math.random(1, 100) <= 30 then
-                    IsMissingState = true
-                    MissTimer = 0
-                    ReturnTimer = 0
-                    local types = {"Behind", "Above", "Front", "Below"}
-                    MissType = types[math.random(1, #types)]
-                else
-                    IsMissingState = false
-                    MissType = "None"
-                end
-            end
-
-            local basePosition = targetPart.Position
-            local distance = (basePosition - Camera.CFrame.Position).Magnitude
-
-            if distance > 40 then
-                local distanceFactor = math.clamp((distance - 40) / 120, 0, 4.5)
-                local distanceSpread = Vector3.new(
-                    math.sin(tick() * 2) * distanceFactor * 0.7,
-                    math.cos(tick() * 3) * distanceFactor * 0.6,
-                    math.sin(tick() * 1.5) * distanceFactor * 0.5
-                )
-                basePosition = basePosition + distanceSpread
-            end
-
-            TrackingFailTimer = TrackingFailTimer + dt
-            if TrackingFailTimer > 1.2 then
-                TrackingFailTimer = 0
-                if math.random(1, 100) <= 15 then
-                    IsTrackingFailing = true
-                    local velocityOffset = closest.Character:FindFirstChild("HumanoidRootPart") and closest.Character.HumanoidRootPart.Velocity * 0.15 or Vector3.new(0,0,0)
-                    TrackingFailOffset = velocityOffset + Vector3.new(math.random(-4, 4), math.random(-3, 3), math.random(-4, 4))
-                else
-                    IsTrackingFailing = false
-                end
-            end
-
-            if IsTrackingFailing then
-                basePosition = basePosition:Lerp(basePosition + TrackingFailOffset, 0.6)
-            end
-
-            if IsMissingState and not TargetRecovered then
-                MissTimer = MissTimer + dt
-                if MissTimer < 0.20 then
-                    local progress = math.sin((MissTimer / 0.20) * (math.pi / 2))
-                    local offset = Vector3.new(0, 0, 0)
-                    
-                    if MissType == "Behind" then offset = Camera.CFrame.RightVector * 2.5
-                    elseif MissType == "Front" then offset = -Camera.CFrame.RightVector * 2.5
-                    elseif MissType == "Above" then offset = Camera.CFrame.UpVector * 2.2
-                    elseif MissType == "Below" then offset = -Camera.CFrame.UpVector * 1.1 end
-                    basePosition = basePosition + (offset * progress)
-                else
-                    ReturnTimer = math.clamp(ReturnTimer + dt * (1.5 + AimSettings.Smoothness * 6), 0, 1)
-                    local ease = 0.5 - math.cos(ReturnTimer * math.pi) / 2
-                    
-                    local offset = Vector3.new(0, 0, 0)
-                    if MissType == "Behind" then offset = Camera.CFrame.RightVector * 2.5
-                    elseif MissType == "Front" then offset = -Camera.CFrame.RightVector * 2.5
-                    elseif MissType == "Above" then offset = Camera.CFrame.UpVector * 2.2
-                    elseif MissType == "Below" then offset = -Camera.CFrame.UpVector * 1.1 end
-                    
-                    basePosition = (basePosition + offset):Lerp(targetPart.Position, ease)
-                    if ReturnTimer >= 1 then TargetRecovered = true end
-                end
-            end
-
-            ShakeTime = ShakeTime + dt * 35.0
-            local rawShake = Vector3.new(
-                math.sin(ShakeTime * 1.3) * 0.42 + (math.random(-30, 30) / 75),
-                math.cos(ShakeTime * 1.6) * 0.35 + (math.random(-30, 30) / 75),
-                0
-            )
-            SmoothShakeOffset = SmoothShakeOffset:Lerp(rawShake, dt * 15.0)
-            local finalTargetPos = basePosition + SmoothShakeOffset
-
-            local screenPos, onScreen = Camera:WorldToViewportPoint(finalTargetPos)
-            if onScreen then
-                local finalScreenPos = Vector2.new(screenPos.X, screenPos.Y)
-                
-                CurrentCurveProgress = math.clamp(CurrentCurveProgress + (dt * (1.5 + AimSettings.Smoothness * 6)), 0, 1)
-                if CurrentCurveProgress < 1 then
-                    local p0 = centerPoint
-                    local p2 = finalScreenPos
-                    local midPoint = p0:Lerp(p2, 0.5)
-                    local p1 = Vector2.new(midPoint.X, math.min(p0.Y, p2.Y) - math.abs(p0.X - p2.X) * 0.3)
-                    finalScreenPos = GetBezierPoint(p0, p1, p2, CurrentCurveProgress)
-                end
-
-                local dynamicLerpFactor = math.clamp(AimSettings.Smoothness, 0.05, 1.0)
-                if dynamicLerpFactor < 1.0 then
-                    local antiCheatJitter = (math.random(-4, 4) / 180)
-                    dynamicLerpFactor = math.clamp(dynamicLerpFactor + antiCheatJitter, 0.05, 0.98)
-                end
-
-                if AimSettings.CameraEnabled then
-                    local targetCFrame = CFrame.new(Camera.CFrame.Position, Camera:ViewportPointToRay(finalScreenPos.X, finalScreenPos.Y).Direction + Camera.CFrame.Position)
-                    Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, dynamicLerpFactor)
-                elseif AimSettings.MouseEnabled then
-                    local rawDelta = (finalScreenPos - centerPoint) * AimSettings.MouseSensitivity * 0.42
-                    lastDelta = lastDelta:Lerp(rawDelta, dynamicLerpFactor)
-                    mousemoverel(lastDelta.X, lastDelta.Y)
+            if targetChar and targetHumanoid and targetHumanoid.Health > 0 then
+                TeleportBehind(TeleportTarget)
+                LastTeleportTime = currentTime
+            else
+                -- 타겟이 죽었으면 새로 찾기
+                TeleportTarget = GetBestTeleportTarget()
+                if TeleportTarget then
+                    TeleportBehind(TeleportTarget)
+                    LastTeleportTime = currentTime
                 end
             end
         end
-    else
-        LastActiveTarget = nil
-        IsMissingState = false
-        IsTrackingFailing = false
     end
 end)
 
@@ -642,6 +789,21 @@ end)
 UserInputService.InputEnded:Connect(function(input, gpe)
     local key = input.KeyCode.Name
     if KeysDown[key] ~= nil then KeysDown[key] = false end
+end)
+
+-- Walk Speed & Jump Power 유지
+RunService.Stepped:Connect(function()
+    if LocalPlayer and LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            if humanoid.WalkSpeed ~= MoveSettings.WalkSpeed then
+                humanoid.WalkSpeed = MoveSettings.WalkSpeed
+            end
+            if humanoid.JumpPower ~= MoveSettings.JumpPower then
+                humanoid.JumpPower = MoveSettings.JumpPower
+            end
+        end
+    end
 end)
 
 RunService.Stepped:Connect(function()
@@ -700,46 +862,6 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- ==================== TELEPORT BEHIND ====================
-RunService.Heartbeat:Connect(function()
-    if not TrollingSettings.TeleportBehind then 
-        CurrentTarget = nil 
-        return 
-    end
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then 
-        return 
-    end
-
-    local currentTime = tick()
-    if not CurrentTarget or currentTime - LastTargetChange > TargetChangeInterval
-        or not CurrentTarget.Character or not CurrentTarget.Character:FindFirstChild("Humanoid")
-        or CurrentTarget.Character.Humanoid.Health <= 0 then
-        
-        local candidates = {}
-        for _, plr in pairs(Players:GetPlayers()) do
-            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0 then
-                if TrollingSettings.TeamCheck and IsSameTeam(plr) then continue end
-                if not TeleportedThisCycle[plr] then 
-                    table.insert(candidates, plr) 
-                end
-            end
-        end
-        if #candidates == 0 then 
-            TeleportedThisCycle = {} 
-            return 
-        end
-        CurrentTarget = candidates[math.random(1, #candidates)]
-        TeleportedThisCycle[CurrentTarget] = true
-        LastTargetChange = currentTime
-    end
-
-    if CurrentTarget and CurrentTarget.Character and CurrentTarget.Character:FindFirstChild("HumanoidRootPart") then
-        local root = CurrentTarget.Character.HumanoidRootPart
-        local lpRoot = LocalPlayer.Character.HumanoidRootPart
-        lpRoot.CFrame = root.CFrame * CFrame.new(0, -2.8, 5.5)
-    end
-end)
-
 -- ==================== ESP ====================
 local function CreateESP(player)
     if not player or player == LocalPlayer then return end
@@ -794,12 +916,10 @@ local function CreateESP(player)
 end
 
 local function UpdateESP()
-    local centerPoint = Camera.ViewportSize / 2
-    
     for player, obj in pairs(ESPObjects) do
         local char = player.Character
         if char and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 and (not ESPSettings.TeamCheck or not IsSameTeam(player)) then
-    local Root = char:FindFirstChild("HumanoidRootPart")
+            local Root = char:FindFirstChild("HumanoidRootPart")
             local Head = char:FindFirstChild("Head")
             if Root and Head then
                 local vp, OnScreen = Camera:WorldToViewportPoint(Root.Position)
