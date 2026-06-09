@@ -21,7 +21,6 @@ local TriggerGroup = Tabs.Main:AddLeftGroupbox('Triggerbot Settings')
 local VisualGroup = Tabs.Main:AddRightGroupbox('Visuals')
 local ESPGroup = Tabs.Main:AddRightGroupbox('ESP Settings')
 
-local TeleportGroup = Tabs.Movement:AddRightGroupbox('Teleport Behind')
 local MoveGroup = Tabs.Movement:AddLeftGroupbox('Movement Hacks')
 
 -- ==================== SETTINGS ====================
@@ -56,13 +55,7 @@ local MoveSettings = {
     JumpPower = 50,
 }
 
-local TeleportSettings = {
-    Enabled = false,
-    TeamCheck = false,
-    Distance = 5.5,
-    Height = -2.8,
-    UpdateInterval = 0.1,
-}
+
 
 local ESPSettings = { 
     Box = false, Name = false, HealthBar = false, Chams = false, Tracer = false, 
@@ -186,51 +179,7 @@ VisualGroup:AddToggle('FullbrightToggle', {
     end
 })
 
--- ==================== TELEPORT BEHIND UI ====================
-local TeleportToggle = TeleportGroup:AddToggle('TeleportBehindToggle', { 
-    Text = 'Teleport Behind (뒤로 텔레포트)', 
-    Default = false, 
-    Callback = function(v) 
-        TeleportSettings.Enabled = v 
-        if not v then
-            TeleportTarget = nil
-        end
-    end 
-})
-TeleportToggle:AddKeyPicker('TeleportKeybind', { Default = 'X', SyncToggleState = true, Mode = 'Toggle', Text = '텔레포트 토글 키' })
 
-TeleportGroup:AddToggle('TeleportTeamCheckToggle', { 
-    Text = 'Team Check (팀체크)', 
-    Default = false, 
-    Callback = function(v) TeleportSettings.TeamCheck = v end 
-})
-
-TeleportGroup:AddSlider('TeleportDistanceSlider', { 
-    Text = 'Teleport Distance (거리)', 
-    Default = 55, 
-    Min = 20, 
-    Max = 150, 
-    Rounding = 0, 
-    Callback = function(v) TeleportSettings.Distance = v / 10 end 
-})
-
-TeleportGroup:AddSlider('TeleportHeightSlider', { 
-    Text = 'Teleport Height (높이)', 
-    Default = -28, 
-    Min = -50, 
-    Max = 0, 
-    Rounding = 0, 
-    Callback = function(v) TeleportSettings.Height = v / 10 end 
-})
-
-TeleportGroup:AddSlider('TeleportUpdateInterval', { 
-    Text = 'Update Interval (초)', 
-    Default = 1, 
-    Min = 1, 
-    Max = 10, 
-    Rounding = 1, 
-    Callback = function(v) TeleportSettings.UpdateInterval = v end 
-})
 
 -- ==================== MOVEMENT UI ====================
 MoveGroup:AddToggle('NoclipToggle', { 
@@ -350,9 +299,6 @@ local FlyBV = nil
 local FlyBG = nil
 local KeysDown = {W = false, A = false, S = false, D = false, Space = false, LeftControl = false}
 
--- ==================== TELEPORT BEHIND VARIABLES ====================
-local TeleportTarget = nil
-local LastTeleportTime = 0
 
 -- ==================== FUNCTIONS ====================
 local function IsSameTeam(plr)
@@ -471,54 +417,7 @@ local function IsEnemyAtCenter()
     return false
 end
 
--- ==================== TELEPORT BEHIND FUNCTION ====================
-local function GetBestTeleportTarget()
-    local closest = nil
-    local closestDist = math.huge
-    
-    for _, plr in pairs(Players:GetPlayers()) do
-        if plr == LocalPlayer then continue end
-        
-        if TeleportSettings.TeamCheck and IsSameTeam(plr) then continue end
-        
-        local char = plr.Character
-        if not char then continue end
-        
-        local humanoid = char:FindFirstChildOfClass("Humanoid")
-        if not humanoid or humanoid.Health <= 0 then continue end
-        
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if not root then continue end
-        
-        local dist = (root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-        if dist < closestDist then
-            closestDist = dist
-            closest = plr
-        end
-    end
-    
-    return closest
-end
 
-local function TeleportBehind(target)
-    if not target then return false end
-    if not target.Character then return false end
-    
-    local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-    if not targetRoot then return false end
-    
-    local lpRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not lpRoot then return false end
-    
-    -- 텔레포트 위치 계산 (상대방 뒤로)
-    local teleportPos = targetRoot.CFrame * CFrame.new(0, TeleportSettings.Height, TeleportSettings.Distance)
-    
-    -- 위치로 텔레포트
-    lpRoot.CFrame = teleportPos
-    lpRoot.Velocity = Vector3.zero
-    
-    return true
-end
 
 -- ==================== TRIGGERBOT 실행 함수 ====================
 local function ExecuteTriggerbot(targetPlayer, targetPart)
@@ -737,47 +636,7 @@ RunService.RenderStepped:Connect(function(dt)
     end
 end)
 
--- ==================== TELEPORT BEHIND LOOP (지속적인 텔레포트) ====================
-RunService.Heartbeat:Connect(function()
-    if not TeleportSettings.Enabled then 
-        TeleportTarget = nil
-        return 
-    end
-    
-    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then 
-        return 
-    end
-    
-    local currentTime = tick()
-    
-    -- 업데이트 간격마다 타겟 갱신 및 텔레포트
-    if currentTime - LastTeleportTime >= TeleportSettings.UpdateInterval then
-        -- 새로운 타겟 찾기
-        local newTarget = GetBestTeleportTarget()
-        if newTarget then
-            TeleportTarget = newTarget
-        end
-        
-        -- 타겟이 있으면 텔레포트
-        if TeleportTarget then
-            -- 타겟이 아직 살아있는지 확인
-            local targetChar = TeleportTarget.Character
-            local targetHumanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
-            
-            if targetChar and targetHumanoid and targetHumanoid.Health > 0 then
-                TeleportBehind(TeleportTarget)
-                LastTeleportTime = currentTime
-            else
-                -- 타겟이 죽었으면 새로 찾기
-                TeleportTarget = GetBestTeleportTarget()
-                if TeleportTarget then
-                    TeleportBehind(TeleportTarget)
-                    LastTeleportTime = currentTime
-                end
-            end
-        end
-    end
-end)
+
 
 -- ==================== NOCLIP & FLY LOGIC ====================
 UserInputService.InputBegan:Connect(function(input, gpe)
