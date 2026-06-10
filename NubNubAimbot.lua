@@ -55,7 +55,11 @@ local MoveSettings = {
     JumpPower = 50,
 }
 
-
+local TeleportSettings = {
+    Enabled = false,
+    TeamCheck = false,
+    TargetSwitchInterval = 1.5,
+}
 
 local ESPSettings = { 
     Box = false, Name = false, HealthBar = false, Chams = false, Tracer = false, 
@@ -249,6 +253,37 @@ MoveGroup:AddSlider('JumpPowerSlider', {
     end 
 })
 
+-- ==================== TELEPORT BEHIND UI ====================
+local TeleportGroup = Tabs.Movement:AddRightGroupbox('Teleport Behind')
+
+local TeleportToggle = TeleportGroup:AddToggle('TeleportBehindToggle', {
+    Text = 'Teleport Behind (뒤로 텔레포트)',
+    Default = false,
+    Callback = function(v)
+        TeleportSettings.Enabled = v
+        if not v then
+            TeleportTarget = nil
+        end
+    end
+})
+
+TeleportGroup:AddToggle('TeleportTeamCheckToggle', {
+    Text = 'Team Check (팀체크)',
+    Default = false,
+    Callback = function(v) TeleportSettings.TeamCheck = v end
+})
+
+TeleportGroup:AddSlider('TargetSwitchIntervalSlider', {
+    Text = 'Target Switch Interval (타겟 변경 주기)',
+    Default = 1.5,
+    Min = 0.1,
+    Max = 5,
+    Rounding = 1,
+    Callback = function(v) 
+        TeleportSettings.TargetSwitchInterval = v 
+    end
+})
+
 -- ==================== ESP GROUP ====================
 ESPGroup:AddToggle('BoxToggle', { Text = 'Box ESP (박스 esp)', Default = false, Callback = function(v) ESPSettings.Box = v end })
 ESPGroup:AddToggle('NameToggle', { Text = 'Name ESP (닉넴 esp)', Default = false, Callback = function(v) ESPSettings.Name = v end })
@@ -299,7 +334,9 @@ local FlyBV = nil
 local FlyBG = nil
 local KeysDown = {W = false, A = false, S = false, D = false, Space = false, LeftControl = false}
 
-
+local TeleportTarget = nil
+local LastTeleportTime = 0
+local LastTargetSwitchTime = 0
 -- ==================== FUNCTIONS ====================
 local function IsSameTeam(plr)
     if not plr.Team or not LocalPlayer.Team then return false end
@@ -417,7 +454,49 @@ local function IsEnemyAtCenter()
     return false
 end
 
+-- ==================== TELEPORT BEHIND FUNCTIONS ====================
+local TELEPORT_DISTANCE = 3
 
+local function GetAllAliveEnemies()
+    local enemies = {}
+    
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr == LocalPlayer then continue end
+        
+        if TeleportSettings.TeamCheck and IsSameTeam(plr) then continue end
+        
+        local char = plr.Character
+        if not char then continue end
+        
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        if not humanoid or humanoid.Health <= 0 then continue end
+        
+        table.insert(enemies, plr)
+    end
+    
+    return enemies
+end
+
+local function GetRandomTeleportTarget()
+    local enemies = GetAllAliveEnemies()
+    if #enemies == 0 then return nil end
+    return enemies[math.random(1, #enemies)]
+end
+
+local function TeleportBehind(target)
+    if not target or not target.Character then return false end
+    
+    local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
+    local lpRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    
+    if not targetRoot or not lpRoot then return false end
+    
+    local behindPosition = targetRoot.CFrame * CFrame.new(0, 0, TELEPORT_DISTANCE)
+    lpRoot.CFrame = behindPosition
+    lpRoot.Velocity = Vector3.zero
+    
+    return true
+end
 
 -- ==================== TRIGGERBOT 실행 함수 ====================
 local function ExecuteTriggerbot(targetPlayer, targetPart)
@@ -718,6 +797,43 @@ RunService.Stepped:Connect(function()
         if humanoid.PlatformStand then humanoid.PlatformStand = false end
         if FlyBV then FlyBV:Destroy(); FlyBV = nil end
         if FlyBG then FlyBG:Destroy(); FlyBG = nil end
+    end
+end)
+
+-- ==================== TELEPORT BEHIND LOOP ====================
+LastTargetSwitchTime = tick()
+
+RunService.Heartbeat:Connect(function()
+    if not TeleportSettings.Enabled then return end
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local currentTime = tick()
+    
+    if not TeleportTarget or currentTime - LastTargetSwitchTime >= TeleportSettings.TargetSwitchInterval then
+        local newTarget = GetRandomTeleportTarget()
+        if newTarget then
+            TeleportTarget = newTarget
+            LastTargetSwitchTime = currentTime
+        end
+    end
+    
+    if TeleportTarget then
+        local targetChar = TeleportTarget.Character
+        local targetHumanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
+        
+        if not targetChar or not targetHumanoid or targetHumanoid.Health <= 0 then
+            TeleportTarget = GetRandomTeleportTarget()
+            LastTargetSwitchTime = currentTime
+        end
+    end
+    
+    if TeleportTarget then
+        local targetChar = TeleportTarget.Character
+        local targetHumanoid = targetChar and targetChar:FindFirstChildOfClass("Humanoid")
+        
+        if targetChar and targetHumanoid and targetHumanoid.Health > 0 then
+            TeleportBehind(TeleportTarget)
+        end
     end
 end)
 
