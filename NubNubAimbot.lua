@@ -53,6 +53,8 @@ local MoveSettings = {
     FlySpeed = 50,
     WalkSpeed = 16,
     JumpPower = 50,
+    WalkSpeedEnabled = false,
+    JumpPowerEnabled = false,
 }
 
 local TeleportSettings = {
@@ -183,9 +185,8 @@ VisualGroup:AddToggle('FullbrightToggle', {
     end
 })
 
-
-
 -- ==================== MOVEMENT UI ====================
+-- Noclip Toggle (수정됨 - 끌 때 원래 상태로 복원)
 MoveGroup:AddToggle('NoclipToggle', { 
     Text = 'Noclip (벽 통과)', 
     Default = false, 
@@ -223,32 +224,82 @@ MoveGroup:AddSlider('FlySpeedSlider', {
     Callback = function(v) MoveSettings.FlySpeed = v end 
 })
 
+-- Walk Speed Toggle
+MoveGroup:AddToggle('WalkSpeedToggle', { 
+    Text = 'Walk Speed ON/OFF (걷기 속도)', 
+    Default = false, 
+    Callback = function(v) 
+        MoveSettings.WalkSpeedEnabled = v
+        if LocalPlayer and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                if v then
+                    humanoid.WalkSpeed = MoveSettings.WalkSpeed
+                else
+                    local original = humanoid:GetAttribute("OriginalWalkSpeed")
+                    if original then
+                        humanoid.WalkSpeed = original
+                    end
+                end
+            end
+        end
+    end 
+})
+
 -- Walk Speed Slider
 MoveGroup:AddSlider('WalkSpeedSlider', { 
-    Text = 'Walk Speed (걷기 속도)', 
+    Text = 'Walk Speed Value (걷기 속도 값)', 
     Default = 16, 
     Min = 16, 
     Max = 200, 
     Rounding = 0, 
     Callback = function(v) 
         MoveSettings.WalkSpeed = v
-        if LocalPlayer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-            LocalPlayer.Character.Humanoid.WalkSpeed = v
+        if MoveSettings.WalkSpeedEnabled and LocalPlayer and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = v
+            end
+        end
+    end 
+})
+
+-- Jump Power Toggle
+MoveGroup:AddToggle('JumpPowerToggle', { 
+    Text = 'Jump Power ON/OFF (점프력)', 
+    Default = false, 
+    Callback = function(v) 
+        MoveSettings.JumpPowerEnabled = v
+        if LocalPlayer and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                if v then
+                    humanoid.JumpPower = MoveSettings.JumpPower
+                else
+                    local original = humanoid:GetAttribute("OriginalJumpPower")
+                    if original then
+                        humanoid.JumpPower = original
+                    end
+                end
+            end
         end
     end 
 })
 
 -- Jump Power Slider
 MoveGroup:AddSlider('JumpPowerSlider', { 
-    Text = 'Jump Power (점프력)', 
+    Text = 'Jump Power Value (점프력 값)', 
     Default = 50, 
     Min = 50, 
     Max = 200, 
     Rounding = 0, 
     Callback = function(v) 
         MoveSettings.JumpPower = v
-        if LocalPlayer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-            LocalPlayer.Character.Humanoid.JumpPower = v
+        if MoveSettings.JumpPowerEnabled and LocalPlayer and LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.JumpPower = v
+            end
         end
     end 
 })
@@ -337,6 +388,41 @@ local KeysDown = {W = false, A = false, S = false, D = false, Space = false, Lef
 local TeleportTarget = nil
 local LastTeleportTime = 0
 local LastTargetSwitchTime = 0
+
+-- ==================== 원본 값 저장 함수 ====================
+local function SaveOriginalMovementValues(character)
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        if not humanoid:GetAttribute("OriginalWalkSpeed") then
+            humanoid:SetAttribute("OriginalWalkSpeed", humanoid.WalkSpeed)
+        end
+        if not humanoid:GetAttribute("OriginalJumpPower") then
+            humanoid:SetAttribute("OriginalJumpPower", humanoid.JumpPower)
+        end
+    end
+end
+
+-- 각 파트의 원본 Collide 상태 저장
+local OriginalCollideStates = {}
+
+local function SaveOriginalCollideStates(character)
+    if not character then return end
+    for _, part in pairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            OriginalCollideStates[part] = part.CanCollide
+        end
+    end
+end
+
+local function RestoreCollideStates(character)
+    if not character then return end
+    for part, originalState in pairs(OriginalCollideStates) do
+        if part and part.Parent then
+            part.CanCollide = originalState
+        end
+    end
+end
+
 -- ==================== FUNCTIONS ====================
 local function IsSameTeam(plr)
     if not plr.Team or not LocalPlayer.Team then return false end
@@ -715,9 +801,19 @@ RunService.RenderStepped:Connect(function(dt)
     end
 end)
 
-
-
 -- ==================== NOCLIP & FLY LOGIC ====================
+-- 캐릭터가 생성될 때 원본 Collide 상태 저장
+LocalPlayer.CharacterAdded:Connect(function(character)
+    task.wait(0.1)
+    SaveOriginalCollideStates(character)
+    SaveOriginalMovementValues(character)
+end)
+
+if LocalPlayer.Character then
+    SaveOriginalCollideStates(LocalPlayer.Character)
+    SaveOriginalMovementValues(LocalPlayer.Character)
+end
+
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     local key = input.KeyCode.Name
@@ -734,20 +830,26 @@ RunService.Stepped:Connect(function()
     if LocalPlayer and LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
-            if humanoid.WalkSpeed ~= MoveSettings.WalkSpeed then
-                humanoid.WalkSpeed = MoveSettings.WalkSpeed
+            if MoveSettings.WalkSpeedEnabled then
+                if humanoid.WalkSpeed ~= MoveSettings.WalkSpeed then
+                    humanoid.WalkSpeed = MoveSettings.WalkSpeed
+                end
             end
-            if humanoid.JumpPower ~= MoveSettings.JumpPower then
-                humanoid.JumpPower = MoveSettings.JumpPower
+            
+            if MoveSettings.JumpPowerEnabled then
+                if humanoid.JumpPower ~= MoveSettings.JumpPower then
+                    humanoid.JumpPower = MoveSettings.JumpPower
+                end
             end
         end
     end
 end)
 
+-- Noclip 적용 (토글에 따라)
 RunService.Stepped:Connect(function()
     if not LocalPlayer.Character then return end
     
-    -- Noclip
+    -- Noclip (토글 ON일 때만 CanCollide = false)
     if MoveSettings.Noclip then
         for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
             if part:IsA("BasePart") and part.CanCollide then 
@@ -1021,20 +1123,7 @@ SaveManager:BuildConfigSection(Tabs['UI Settings'])
 ThemeManager:ApplyToTab(Tabs['UI Settings'])
 SaveManager:LoadAutoloadConfig()
 
+-- 언로드 해도 아무것도 안꺼지게
 Library.Unloaded:Connect(function()
-    if FlyBV then FlyBV:Destroy() end
-    if FlyBG then FlyBG:Destroy() end
-    FOVCircle:Destroy()
-    for _, obj in pairs(ESPObjects) do
-        for _, v in pairs(obj) do
-            if typeof(v) == "Instance" then
-                v:Destroy()
-            elseif typeof(v) == "table" and v.Destroy then
-                v:Destroy()
-            else
-                pcall(function() v:Remove() end)
-            end
-        end
-    end
-    ESPObjects = {}
+    -- 아무것도 하지 않음!
 end)
